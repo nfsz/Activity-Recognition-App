@@ -70,15 +70,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void onClick(View v) {
         switch(v.getId()){
               case R.id.buttonStart:
-                Log.d("BoundedService", "pressed BoundedS");
+                //Log.d("BoundedService", "pressed BoundedS");
                 Intent myIntent = new Intent(this, BoundedService.class);
                 bindService(myIntent, mConnection, BIND_AUTO_CREATE);
                 break;
             case R.id.buttonLog:
-                Log.d("BoundedService", "pressed Log");
+                //Log.d("BoundedService", "pressed Log");
                 if (connected == true) {
-                    String msg_= myService.msg();
+                    String msg_= myService.acclData();
                     Log.d("BoundedService", msg_);
+                }else{
+                    Log.d("BoundedService", "Hit start to collect data");
                 }
                 break;
         }
@@ -90,6 +92,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             binder_ = (BoundedService.MyBinder) service;
             myService = binder_.getService();
             connected = true;
+            myService.startSensors();
         }
 
         @Override
@@ -97,4 +100,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             connected = false;
         }
     };
+    @Override
+         protected void onResume(){
+        super.onResume();
+        if (connected == true) {
+            myService.startSensors();
+        }
+    }
+    @Override
+    protected void onPause(){
+        super.onPause();
+        if (connected == true) {
+            myService.pauseSensors();
+        }
+    }
 }
