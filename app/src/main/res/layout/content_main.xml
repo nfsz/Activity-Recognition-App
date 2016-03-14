@@ -30,9 +30,19 @@
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Log XYZ"
+        android:text="Display RMS"
         android:id="@+id/buttonLog"
         android:layout_below="@+id/buttonStart"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="29dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="Medium Text"
+        android:id="@+id/testViewRMS"
+        android:layout_below="@+id/buttonLog"
+        android:layout_alignStart="@+id/buttonStart"
+        android:layout_marginTop="42dp" />
 </RelativeLayout>

@@ -52,6 +52,18 @@ public class BoundedService extends Service implements SensorEventListener, Loca
         return "x: " + acclx + "\n" + "y: " + accly + "\n" + "z: " + acclz + "\n";
     }
 
+    public double getAcclx() {
+        return acclx;
+    }
+
+    public double getAccly() {
+        return accly;
+    }
+
+    public double getAcclz() {
+        return acclz;
+    }
+
     private class AcclWork implements Runnable {
 
         private SensorEvent event_;

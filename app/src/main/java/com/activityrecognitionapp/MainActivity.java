@@ -10,17 +10,19 @@ import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
-import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.Button;
+import android.widget.TextView;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener  {
 
-    Button start, log;
-    BoundedService.MyBinder binder_;
-    BoundedService myService;
-    Boolean connected = false;
+    private Button start, log;
+    private TextView rmsView;
+    private BoundedService.MyBinder binder_;
+    private BoundedService myService;
+    private Boolean connected = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,6 +44,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         start.setOnClickListener(this);
         log = (Button) findViewById(R.id.buttonLog);
         log.setOnClickListener(this);
+
+        rmsView = (TextView) findViewById(R.id.testViewRMS);
     }
 
     @Override
@@ -79,6 +83,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 if (connected == true) {
                     String msg_= myService.acclData();
                     Log.d("BoundedService", msg_);
+                    double rms = Math.sqrt((1.0/3) * (Math.pow(myService.getAcclx(), 2) +
+                                            Math.pow(myService.getAccly(), 2) +
+                                            Math.pow(myService.getAcclz(), 2)));
+                    rmsView.setText(Double.toString(rms));
                 }else{
                     Log.d("BoundedService", "Hit start to collect data");
                 }
