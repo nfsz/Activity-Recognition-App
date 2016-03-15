@@ -17,7 +17,7 @@ import android.widget.Button;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener  {
 
-    Button start, log;
+    Button start, stop, log, walk, sit, lay;
     BoundedService.MyBinder binder_;
     BoundedService myService;
     Boolean connected = false;
@@ -40,8 +40,23 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         start = (Button) findViewById(R.id.buttonStart);
         start.setOnClickListener(this);
+        stop = (Button) findViewById(R.id.buttonStop);
+        stop.setOnClickListener(this);
         log = (Button) findViewById(R.id.buttonLog);
         log.setOnClickListener(this);
+        walk = (Button) findViewById(R.id.buttonWalk);
+        walk.setOnClickListener(this);
+        sit = (Button) findViewById(R.id.buttonSit);
+        sit.setOnClickListener(this);
+        lay = (Button) findViewById(R.id.buttonLay);
+        lay.setOnClickListener(this);
+
+        walk.setVisibility(View.GONE);
+        sit.setVisibility(View.GONE);
+        lay.setVisibility(View.GONE);
+
+
+
     }
 
     @Override
@@ -73,7 +88,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 //Log.d("BoundedService", "pressed BoundedS");
                 Intent myIntent = new Intent(this, BoundedService.class);
                 bindService(myIntent, mConnection, BIND_AUTO_CREATE);
+                  walk.setVisibility(View.VISIBLE);
+                  sit.setVisibility(View.VISIBLE);
+                  lay.setVisibility(View.VISIBLE);
                 break;
+            case R.id.buttonStop:
+                walk.setVisibility(View.GONE);
+                sit.setVisibility(View.GONE);
+                lay.setVisibility(View.GONE);
+                break;
+
             case R.id.buttonLog:
                 //Log.d("BoundedService", "pressed Log");
                 if (connected == true) {
@@ -83,6 +107,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     Log.d("BoundedService", "Hit start to collect data");
                 }
                 break;
+            case R.id.buttonWalk:
+                break;
+            case R.id.buttonSit:
+                break;
+            case R.id.buttonLay:
+                break;
+
         }
     }
 
