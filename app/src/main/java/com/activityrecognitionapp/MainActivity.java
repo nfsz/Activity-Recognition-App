@@ -104,8 +104,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 if (connected == true) {
                     String accMsg = myService.acclData();
                     String gyroMsg = myService.gyroData();
+                    String locMsg = myService.locData();
                     Log.d("Acceleration data: ", accMsg);
                     Log.d("Gyroscope data: ", gyroMsg);
+                    Log.d("Location data: ", locMsg);
                 }else{
                     Log.d("BoundedService", "Hit start to collect data");
                 }

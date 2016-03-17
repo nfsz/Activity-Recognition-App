@@ -30,12 +30,11 @@ public class BoundedService extends Service implements SensorEventListener, Loca
     private double acclx;
     private double accly;
     private double acclz;
-    private double axisX;
-    private double axisY;
-    private double axisZ;
-    private static final float NS2S = 1.0f / 1000000000.0f;
-    private final float[] deltaRotationVector = new float[4];
-    private final float EPSILON = 0.001f;
+    private double axisX; //gyroscope x-cood speed measured in rads/sec
+    private double axisY; //gyroscope y-cood speed measured in rads/sec
+    private double axisZ; //gyroscope z-cood speed measured in rads/sec
+    private float locAcc; //location accuracy measured in centimeters
+    private float locSpeed; //location speed meassured in cm/sec
 
 
     @Override
@@ -45,21 +44,25 @@ public class BoundedService extends Service implements SensorEventListener, Loca
     }
 
     public class MyBinder extends Binder {
-        BoundedService getService(){
+        BoundedService getService() {
             return BoundedService.this;
         }
     }
 
-    public String msg(){
+    public String msg() {
         return "Hello World";
     }
 
-    public String acclData(){
+    public String acclData() {
         return "x: " + acclx + "\n" + "y: " + accly + "\n" + "z: " + acclz + "\n";
     }
 
     public String gyroData() {
         return "x: " + axisX + "\n" + "y: " + axisY + "\n" + "z: " + axisZ + "\n";
+    }
+
+    public String locData() {
+        return "location (meters): " + locAcc + "\n" + "location speed (meters/sec): " + locSpeed + "\n";
     }
 
     private class AcclWork implements Runnable {
@@ -105,7 +108,7 @@ public class BoundedService extends Service implements SensorEventListener, Loca
     @Override
     public void onSensorChanged(SensorEvent event) {
         Sensor mySensor = event.sensor;
-        switch(mySensor.getType()) {
+        switch (mySensor.getType()) {
             case (Sensor.TYPE_ACCELEROMETER):
                 //double acclx = event.values[0];
                 //double accly = event.values[1];
@@ -116,13 +119,13 @@ public class BoundedService extends Service implements SensorEventListener, Loca
                 //acclze.setText(new Double(acclz).toString());
                 myHandler.post(new AcclWork(event));
                 break;
-            case(Sensor.TYPE_GYROSCOPE_UNCALIBRATED):
+            case (Sensor.TYPE_GYROSCOPE_UNCALIBRATED):
                 myHandler.post(new GyroWork(event));
                 break;
         }
     }
 
-    public void startSensors(){
+    public void startSensors() {
 
         sensormanager_ = (SensorManager) getSystemService(SENSOR_SERVICE);
         gyroscope_ = sensormanager_.getDefaultSensor(Sensor.TYPE_GYROSCOPE_UNCALIBRATED);
@@ -154,7 +157,10 @@ public class BoundedService extends Service implements SensorEventListener, Loca
 
     @Override
     public void onLocationChanged(Location location) {
+        // Called when a new location is found by the network location provider.
 
+        locAcc = 100 * location.getAccuracy();
+        locSpeed = 100 * location.getSpeed();
     }
 
     @Override
