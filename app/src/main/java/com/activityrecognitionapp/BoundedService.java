@@ -30,9 +30,9 @@ public class BoundedService extends Service implements SensorEventListener, Loca
     private double acclx;
     private double accly;
     private double acclz;
-    private float axisX;
-    private float axisY;
-    private float axisZ;
+    private double axisX;
+    private double axisY;
+    private double axisZ;
     private static final float NS2S = 1.0f / 1000000000.0f;
     private final float[] deltaRotationVector = new float[4];
     private final float EPSILON = 0.001f;
@@ -61,12 +61,6 @@ public class BoundedService extends Service implements SensorEventListener, Loca
     public String gyroData() {
         return "x: " + axisX + "\n" + "y: " + axisY + "\n" + "z: " + axisZ + "\n";
     }
-
-    public double getAcclx() { return acclx; }
-
-    public double getAccly() { return accly; }
-
-    public double getAcclz() { return acclz; }
 
     private class AcclWork implements Runnable {
 
@@ -131,7 +125,7 @@ public class BoundedService extends Service implements SensorEventListener, Loca
     public void startSensors(){
 
         sensormanager_ = (SensorManager) getSystemService(SENSOR_SERVICE);
-        gyroscope_ = sensormanager_.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
+        gyroscope_ = sensormanager_.getDefaultSensor(Sensor.TYPE_GYROSCOPE_UNCALIBRATED);
         accelerometer_ = sensormanager_.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
 
         sensormanager_.registerListener(this, gyroscope_, SensorManager.SENSOR_DELAY_NORMAL, DELAY);
