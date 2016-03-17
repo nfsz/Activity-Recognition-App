@@ -14,7 +14,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
-import android.widget.TextView;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener  {
 
@@ -103,8 +102,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case R.id.buttonLog:
                 //Log.d("BoundedService", "pressed Log");
                 if (connected == true) {
-                    String msg_= myService.acclData();
-                    Log.d("BoundedService", msg_);
+                    String accMsg = myService.acclData();
+                    String gyroMsg = myService.gyroData();
+                    Log.d("Acceleration data: ", accMsg);
+                    Log.d("Gyroscope data: ", gyroMsg);
                 }else{
                     Log.d("BoundedService", "Hit start to collect data");
                 }
