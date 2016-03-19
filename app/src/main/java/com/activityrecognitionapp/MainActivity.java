@@ -97,6 +97,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 walk.setVisibility(View.GONE);
                 sit.setVisibility(View.GONE);
                 lay.setVisibility(View.GONE);
+                myService.setCurrentActivity(0);
                 break;
 
             case R.id.buttonLog:
@@ -113,10 +114,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }
                 break;
             case R.id.buttonWalk:
+                myService.setCurrentActivity(1);
                 break;
             case R.id.buttonSit:
+                myService.setCurrentActivity(2);
                 break;
             case R.id.buttonLay:
+                myService.setCurrentActivity(3);
                 break;
 
         }
