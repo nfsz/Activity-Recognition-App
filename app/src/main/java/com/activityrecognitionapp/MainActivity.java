@@ -97,6 +97,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 walk.setVisibility(View.GONE);
                 sit.setVisibility(View.GONE);
                 lay.setVisibility(View.GONE);
+                if (connected == true) {
+                    myService.setCurrentActivity(0);
+                    myService.parseData.interrupt();
+                    myService.pauseSensors();
+                }
+
                 break;
 
             case R.id.buttonLog:
@@ -113,13 +119,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }
                 break;
             case R.id.buttonWalk:
-                Log.d("Time walking: ", "button pressed");
+                myService.setCurrentActivity(1);
                 break;
             case R.id.buttonSit:
-                Log.d("Time sitting: ", "button pressed");
+                myService.setCurrentActivity(2);
                 break;
             case R.id.buttonLay:
-                Log.d("Time laying: ", "button pressed");
+                myService.setCurrentActivity(3);
                 break;
 
         }
@@ -132,6 +138,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             myService = binder_.getService();
             connected = true;
             myService.startSensors();
+
+            //if (!myService.parseData.isAlive()) {
+            myService.parseData.start();
+            //}
         }
 
         @Override
@@ -150,6 +160,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     protected void onPause(){
         super.onPause();
         if (connected == true) {
+            myService.parseData.interrupt();
             myService.pauseSensors();
         }
     }
