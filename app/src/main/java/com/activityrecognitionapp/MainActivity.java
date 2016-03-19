@@ -113,10 +113,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }
                 break;
             case R.id.buttonWalk:
+                Log.d("Time walking: ", "button pressed");
                 break;
             case R.id.buttonSit:
+                Log.d("Time sitting: ", "button pressed");
                 break;
             case R.id.buttonLay:
+                Log.d("Time laying: ", "button pressed");
                 break;
 
         }
