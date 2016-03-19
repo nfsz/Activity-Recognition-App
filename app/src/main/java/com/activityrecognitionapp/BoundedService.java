@@ -16,6 +16,8 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.support.v4.app.ActivityCompat;
+import android.util.Log;
+
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
@@ -79,20 +81,20 @@ public class BoundedService extends Service implements SensorEventListener, Loca
         return "location (meters): " + locAcc + "\n" + "location speed (meters/sec): " + locSpeed + "\n";
     }
 
-    private Runnable parseData = new Runnable() {
+    public Thread parseData = new Thread(new Runnable() {
         public void run() {
-            while(true) {
+            while(!Thread.currentThread().isInterrupted()) {
                 try {
                     Thread.sleep(120000); //two minutes
                     chunkData();
                     runAlgorithm();
-                } catch (Exception e) {
-                    e.printStackTrace();
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    return;
                 }
             }
         }
-    };
-
+    });
 
     private void chunkData() {
         chunkedAccDataList = accDataList;
@@ -104,8 +106,9 @@ public class BoundedService extends Service implements SensorEventListener, Loca
     }
 
     private void runAlgorithm() {
+        Log.d("Log", "Running Algorithm");
 
-        synchronized(chunkedAccDataList) {
+/*        synchronized(chunkedAccDataList) {
             Iterator i = chunkedAccDataList.iterator();
             while (i.hasNext()) {
                 //foo(i.next());
@@ -124,7 +127,7 @@ public class BoundedService extends Service implements SensorEventListener, Loca
             while (i.hasNext()) {
                 //foo(i.next());
             }
-        }
+        }*/
 
     }
 
