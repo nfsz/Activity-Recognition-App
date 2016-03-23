@@ -1,12 +1,15 @@
 package com.activityrecognitionapp;
 
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.IBinder;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -15,6 +18,10 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+
 public class MainActivity extends AppCompatActivity implements View.OnClickListener  {
 
 
@@ -22,6 +29,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     BoundedService.MyBinder binder_;
     BoundedService myService;
     Boolean connected = false;
+    Context context;
+    FileOutputStream out;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,7 +66,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         sit.setVisibility(View.GONE);
         lay.setVisibility(View.GONE);
 
-
+        context = this;
 
     }
 
@@ -97,12 +107,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 walk.setVisibility(View.GONE);
                 sit.setVisibility(View.GONE);
                 lay.setVisibility(View.GONE);
+
                 if (connected == true) {
                     myService.setCurrentActivity(0);
                     myService.parseData.interrupt();
                     myService.pauseSensors();
                 }
-
                 break;
 
             case R.id.buttonLog:
@@ -114,6 +124,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     Log.d("Acceleration data: ", accMsg);
                     Log.d("Gyroscope data: ", gyroMsg);
                     Log.d("Location data: ", locMsg);
+                    String msg = myService.acclData();
+                    writeToFile(msg + "\n");
+
                 }else{
                     Log.d("BoundedService", "Hit start to collect data");
                 }
@@ -129,6 +142,28 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 break;
 
         }
+    }
+
+    private void writeToFile(String txt) {
+
+        if (isExternalStorageWritable()) {
+
+            try{
+                out.write(txt.getBytes());
+            }
+            catch (IOException e) {
+                e.printStackTrace();
+            }
+
+        }else{
+            Log.d("Error", "External storage not mounted");
+        }
+
+    }
+
+    public boolean isExternalStorageWritable() {
+        String state = Environment.getExternalStorageState();
+        return (Environment.MEDIA_MOUNTED.equals(state));
     }
 
     private ServiceConnection mConnection = new ServiceConnection() {
@@ -150,11 +185,31 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     };
     @Override
-         protected void onResume(){
+        protected void onResume(){
         super.onResume();
         if (connected == true) {
             myService.startSensors();
         }
+
+        if (isExternalStorageWritable()) {
+
+//            Log.d("paths", ContextCompat.getExternalFilesDirs(context, null)[0].toString());
+//            Log.d("paths", ContextCompat.getExternalFilesDirs(context, null)[1].toString());
+
+            File file = new File(ContextCompat.getExternalFilesDirs(context, null)[1], "activities.txt");
+            //File file = new File("/storage/extSdCard/Android/data/com.activityrecognitionapp/files", "activities.txt");
+            //File file = new File("context.getExternalFilesDir(null);", "activities.txt");
+            //File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "activities.txt");
+
+            try {
+                out = new FileOutputStream(file);
+            }catch(IOException e){
+                e.printStackTrace();
+            }
+        }else{
+            Log.d("Error", "External storage not mounted");
+        }
+
     }
     @Override
     protected void onPause(){
@@ -163,5 +218,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             myService.parseData.interrupt();
             myService.pauseSensors();
         }
+
+        try {
+            out.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
     }
 }

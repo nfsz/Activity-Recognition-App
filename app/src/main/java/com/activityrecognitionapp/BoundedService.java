@@ -21,7 +21,6 @@ import android.util.Log;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 
 public class BoundedService extends Service implements SensorEventListener, LocationListener {
@@ -49,6 +48,7 @@ public class BoundedService extends Service implements SensorEventListener, Loca
     List<AcclDataPoint> chunkedAccDataList;
     List<GyroDataPoint> chunkedGyroDataList;
     List<LocDataPoint> chunkedLocDataList;
+    private int LOCATION_CHANGES = 20; //threshold to predict walking or running
 
 
 
@@ -107,6 +107,13 @@ public class BoundedService extends Service implements SensorEventListener, Loca
 
     private void runAlgorithm() {
         Log.d("Log", "Running Algorithm");
+
+        if(locDataList.size() >= LOCATION_CHANGES) {
+
+        }
+        else {
+
+        }
 
 /*        synchronized(chunkedAccDataList) {
             Iterator i = chunkedAccDataList.iterator();
