@@ -24,8 +24,9 @@ import java.util.Collections;
 import java.util.List;
 
 public class BoundedService extends Service implements SensorEventListener, LocationListener {
-    public BoundedService() {
-    }
+    private final long THREAD_SLEEP_TIME = 5000;
+    private final int LOCATION_CHANGES = 0; //threshold to predict walking or running
+
 
     private MyBinder mybinder_ = new MyBinder();
     private LocationManager locationManager_;
@@ -33,6 +34,7 @@ public class BoundedService extends Service implements SensorEventListener, Loca
     private Sensor accelerometer_, gyroscope_;
     private final int DELAY = 100;
     private Handler myHandler = new Handler();
+    private ServiceCallbacks serviceCallbacks;
     private double acclX;
     private double acclY;
     private double acclZ;
@@ -48,10 +50,15 @@ public class BoundedService extends Service implements SensorEventListener, Loca
     List<AcclDataPoint> chunkedAccDataList;
     List<GyroDataPoint> chunkedGyroDataList;
     List<LocDataPoint> chunkedLocDataList;
-    private int LOCATION_CHANGES = 20; //threshold to predict walking or running
 
 
+    //TODO: do we need this constructor?
+    public BoundedService() {
+    }
 
+    public void setCallbacks(ServiceCallbacks callbacks) {
+        serviceCallbacks = callbacks;
+    }
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -70,22 +77,22 @@ public class BoundedService extends Service implements SensorEventListener, Loca
     }
 
     public String acclData() {
-        return "x: " + acclX + "\n" + "y: " + acclY + "\n" + "z: " + acclZ + "\n";
+        return "x: " + acclX + " " + "y: " + acclY + " " + "z: " + acclZ + "\n";
     }
 
     public String gyroData() {
-        return "x: " + axisX + "\n" + "y: " + axisY + "\n" + "z: " + axisZ + "\n";
+        return "x: " + axisX + " " + "y: " + axisY + " " + "z: " + axisZ + "\n";
     }
 
     public String locData() {
-        return "location (meters): " + locAcc + "\n" + "location speed (meters/sec): " + locSpeed + "\n";
+        return "location (meters): " + locAcc + " " + "location speed (meters/sec): " + locSpeed + "\n";
     }
 
     public Thread parseData = new Thread(new Runnable() {
         public void run() {
             while(!Thread.currentThread().isInterrupted()) {
                 try {
-                    Thread.sleep(120000); //two minutes
+                    Thread.sleep(THREAD_SLEEP_TIME);
                     chunkData();
                     runAlgorithm();
                 } catch (InterruptedException e) {
@@ -109,7 +116,9 @@ public class BoundedService extends Service implements SensorEventListener, Loca
         Log.d("Log", "Running Algorithm");
 
         if(locDataList.size() >= LOCATION_CHANGES) {
-
+            if(serviceCallbacks != null) {
+                serviceCallbacks.predictActivity("Walking or Running");
+            }
         }
         else {
 

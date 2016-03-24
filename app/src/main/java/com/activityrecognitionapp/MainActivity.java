@@ -17,20 +17,25 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.TextView;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener  {
+public class MainActivity extends AppCompatActivity implements View.OnClickListener, ServiceCallbacks {
 
 
-    Button start, stop, log, walk, sit, lay;
-    BoundedService.MyBinder binder_;
-    BoundedService myService;
-    Boolean connected = false;
-    Context context;
-    FileOutputStream out;
+    private Button start, stop, log, walk, sit, lay;
+    private TextView logText, predictText;
+    private BoundedService.MyBinder binder_;
+    private BoundedService myService;
+    private Boolean connected = false;
+    private Context context;
+    private String activity_;
+    private String currentActivity_;
+    private boolean isActivitySet_;
+    private FileOutputStream out;
 
 
     @Override
@@ -66,6 +71,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         sit.setVisibility(View.GONE);
         lay.setVisibility(View.GONE);
 
+        logText = (TextView) findViewById(R.id.logText);
+        predictText = (TextView) findViewById(R.id.predictText);
         context = this;
 
     }
@@ -102,11 +109,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                   walk.setVisibility(View.VISIBLE);
                   sit.setVisibility(View.VISIBLE);
                   lay.setVisibility(View.VISIBLE);
+                  isActivitySet_ = false;
                 break;
             case R.id.buttonStop:
                 walk.setVisibility(View.GONE);
                 sit.setVisibility(View.GONE);
                 lay.setVisibility(View.GONE);
+                isActivitySet_ = false;
 
                 if (connected == true) {
                     myService.setCurrentActivity(0);
@@ -124,27 +133,40 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     Log.d("Acceleration data: ", accMsg);
                     Log.d("Gyroscope data: ", gyroMsg);
                     Log.d("Location data: ", locMsg);
+                    logText.setText(accMsg + " " + gyroMsg + " " + locMsg + " ");
+                    if(isActivitySet_) {
+                        isActivitySet_ = false;
+                        predictText.setText("Predicted activity: " + activity_ + "\n"
+                                            + "Actual activity: " + currentActivity_);
+                    }
+                    else {
+                        predictText.setText("Waiting for prediction...");
+                    }
                     String msg = myService.acclData();
                     writeToFile(msg + "\n");
 
                 }else{
+                    logText.setText("Data collection has not started. Hit start to collect data");
                     Log.d("BoundedService", "Hit start to collect data");
                 }
                 break;
             case R.id.buttonWalk:
                 myService.setCurrentActivity(1);
+                currentActivity_ = "Walking";
                 break;
             case R.id.buttonSit:
                 myService.setCurrentActivity(2);
+                currentActivity_ = "Sitting";
                 break;
             case R.id.buttonLay:
                 myService.setCurrentActivity(3);
+                currentActivity_ = "Laying";
                 break;
 
         }
     }
 
-    private void writeToFile(String txt) {
+    public void writeToFile(String txt) {
 
         if (isExternalStorageWritable()) {
 
@@ -173,7 +195,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             myService = binder_.getService();
             connected = true;
             myService.startSensors();
-
+            myService.setCallbacks(MainActivity.this); // setting this activity as the callback
             //if (!myService.parseData.isAlive()) {
             myService.parseData.start();
             //}
@@ -185,7 +207,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     };
     @Override
-        protected void onResume(){
+    protected void onResume(){
         super.onResume();
         if (connected == true) {
             myService.startSensors();
@@ -225,5 +247,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             e.printStackTrace();
         }
 
+    }
+
+    @Override
+    public void predictActivity(String activity) {
+        activity_ = activity;
+        isActivitySet_ = true;
+        Log.d("predicted activity: ", "activity");
     }
 }

@@ -15,7 +15,6 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Hello World!"
         android:id="@+id/textView" />
 
     <Button
@@ -68,5 +67,25 @@
         android:id="@+id/buttonLay"
         android:layout_alignTop="@+id/buttonSit"
         android:layout_alignParentEnd="true" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:text="The sensors log is entered here..."
+        android:id="@+id/logText"
+        android:layout_below="@+id/buttonStop"
+        android:layout_alignParentStart="true"
+        android:layout_marginTop="82dp"
+        android:layout_alignEnd="@+id/buttonLay" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:text="Predictions..."
+        android:id="@+id/predictText"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true" />
 
 </RelativeLayout>
