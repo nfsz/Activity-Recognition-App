@@ -154,7 +154,7 @@ public class BoundedService extends Service implements SensorEventListener {
 
         String activity = "";
 
-        if(chunkedLocDataList.size() >= THREAD_SLEEP_TIME / (1000 * 2)) {
+        if(chunkedLocDataList.size() >= THREAD_SLEEP_TIME / (10000 * 2)) {
             activity = "Walking";
         }
         else {
@@ -345,7 +345,7 @@ public class BoundedService extends Service implements SensorEventListener {
         }
         //locationManager_.requestLocationUpdates(LocationManager.GPS_PROVIDER, 10, 0, this);
 
-        locationManager_.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 1, new LocationListener() {
+        locationManager_.requestLocationUpdates(LocationManager.GPS_PROVIDER, 10000, 1, new LocationListener() {
             @Override
             public void onLocationChanged(Location location) {
                 locAcc = 100 * location.getAccuracy();
