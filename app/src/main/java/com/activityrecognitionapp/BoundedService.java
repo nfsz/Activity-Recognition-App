@@ -18,9 +18,11 @@ import android.os.IBinder;
 import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 
 public class BoundedService extends Service implements SensorEventListener {
@@ -53,6 +55,9 @@ public class BoundedService extends Service implements SensorEventListener {
     List<AcclDataPoint> chunkedAccDataList;
     List<GyroDataPoint> chunkedGyroDataList;
     List<LocDataPoint> chunkedLocDataList;
+    ArrayList<String> activities = new ArrayList<String>();
+    Calendar timeBefore;
+    Calendar timeAfter;
 
 
     public BoundedService() {
@@ -107,11 +112,13 @@ public class BoundedService extends Service implements SensorEventListener {
         public void run() {
             while(!Thread.currentThread().isInterrupted()) {
                 try {
+                    timeBefore = Calendar.getInstance();
                     Thread.sleep(THREAD_SLEEP_TIME);
+                    timeAfter = Calendar.getInstance();
                     NUM_PREDICTIONS += 1;
-                    NUM_LOCATION_CHANGES = 0;
                     chunkData();
                     runAlgorithm();
+                    NUM_LOCATION_CHANGES = 0;
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                     return;
@@ -130,34 +137,52 @@ public class BoundedService extends Service implements SensorEventListener {
     }
 
     private void runAlgorithm() {
-        Log.d("Log", "Running Algorithm");
+        //Log.d("Log", "Running Algorithm");
 
-        if(NUM_LOCATION_CHANGES >= LOCATION_CHANGES) {
+        String activity = "";
+
+        if(chunkedLocDataList.size() >= THREAD_SLEEP_TIME / (1000 * 2)) {
             if(serviceCallbacks != null) {
-                serviceCallbacks.predictActivity("Walking " + Integer.toString(NUM_LOCATION_CHANGES));
+                serviceCallbacks.predictActivity("Walking " + Integer.toString(chunkedLocDataList.size()));
+                activity = "Walking";
             }
         }
         else {
             if(serviceCallbacks != null) {
-                double rms = rms();
-                if(rms >= 2) {
+                double ZSum = 0;
+                int listSize = chunkedAccDataList.size();
+
+                synchronized(chunkedAccDataList) {
+                    Iterator i = chunkedAccDataList.iterator();
+                    while (i.hasNext()) {
+                        //i.next().getClass();
+                        double z = ((AcclDataPoint)i.next()).getAcclZ();
+                        ZSum += z;
+                    }
+                }
+
+                double ZAvg = ZSum / listSize;
+
+                if (ZAvg >= 0){
                     serviceCallbacks.predictActivity("Sitting " + Integer.toString(NUM_LOCATION_CHANGES));
-                }
-                else {
+                    activity = "Sitting";
+                }else if (ZAvg < 0){
                     serviceCallbacks.predictActivity("Laying " + Integer.toString(NUM_LOCATION_CHANGES));
-
+                    activity = "Laying";
                 }
+
             }
         }
 
-/*        synchronized(chunkedAccDataList) {
-            Iterator i = chunkedAccDataList.iterator();
-            while (i.hasNext()) {
-                //foo(i.next());
-            }
-        }
+        Calendar time = Calendar.getInstance();
+        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss a");
+        String before = sdf.format(timeBefore.getTime());
+        String after = sdf.format(timeAfter.getTime());
+        String activityString = before + " - " + after + "\t" + activity;
+        activities.add(activityString);
+        Log.d("Activity: ", activityString);
 
-        synchronized(chunkedGyroDataList) {
+/*        synchronized(chunkedGyroDataList) {
             Iterator i = chunkedGyroDataList.iterator();
             while (i.hasNext()) {
                 //foo(i.next());
@@ -231,6 +256,10 @@ public class BoundedService extends Service implements SensorEventListener {
             time = Calendar.getInstance();
 //            SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss a");
 //            String strTime = sdf.format(c.getTime());
+        }
+
+        public double getAcclZ() {
+            return acclZ;
         }
 
         AcclDataPoint(double x, double y, double z){
@@ -325,7 +354,7 @@ public class BoundedService extends Service implements SensorEventListener {
         }
         //locationManager_.requestLocationUpdates(LocationManager.GPS_PROVIDER, 10, 0, this);
 
-        locationManager_.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 3, new LocationListener() {
+        locationManager_.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 1, new LocationListener() {
             @Override
             public void onLocationChanged(Location location) {
                 serviceCallbacks.locationChanged();

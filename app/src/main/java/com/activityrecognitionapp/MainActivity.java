@@ -132,9 +132,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     String accMsg = myService.acclData();
                     String gyroMsg = myService.gyroData();
                     String locMsg = myService.locData();
+                    Log.d("Activity: ", currentActivity_);
                     Log.d("Acceleration data: ", accMsg);
                     Log.d("Gyroscope data: ", gyroMsg);
                     Log.d("Location data: ", locMsg);
+                    Log.d("-- ", "--");
+
                     if(isChanged) {
                         isChanged = false;
                         locationChanged.setText("Location changed");
@@ -267,7 +270,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         if(activity.equals(currentActivity_)) {
             myService.incrSuccess();
         }
-        Log.d("predicted activity: ", "activity");
+        //Log.d("predicted activity: ", "activity");
     }
 
     @Override
