@@ -25,7 +25,7 @@ import java.util.List;
 
 public class BoundedService extends Service implements SensorEventListener, LocationListener {
     private final long THREAD_SLEEP_TIME = 5000;
-    private final int LOCATION_CHANGES = 0; //threshold to predict walking or running
+    private final int LOCATION_CHANGES = 1; //threshold to predict walking or running
 
 
     private MyBinder mybinder_ = new MyBinder();
@@ -33,6 +33,8 @@ public class BoundedService extends Service implements SensorEventListener, Loca
     private SensorManager sensormanager_;
     private Sensor accelerometer_, gyroscope_;
     private final int DELAY = 100;
+    private float NUM_PREDICTIONS;
+    private float CORRECT_PREDICTIONS;
     private Handler myHandler = new Handler();
     private ServiceCallbacks serviceCallbacks;
     private double acclX;
@@ -52,8 +54,16 @@ public class BoundedService extends Service implements SensorEventListener, Loca
     List<LocDataPoint> chunkedLocDataList;
 
 
-    //TODO: do we need this constructor?
     public BoundedService() {
+        CORRECT_PREDICTIONS += 1;
+    }
+
+    public void incrSuccess() {
+        CORRECT_PREDICTIONS += 1;
+    }
+
+    public float succRate() {
+        return CORRECT_PREDICTIONS/NUM_PREDICTIONS;
     }
 
     public void setCallbacks(ServiceCallbacks callbacks) {
@@ -84,6 +94,10 @@ public class BoundedService extends Service implements SensorEventListener, Loca
         return "x: " + axisX + " " + "y: " + axisY + " " + "z: " + axisZ + "\n";
     }
 
+    private double rms() {
+        return Math.sqrt((1.0/3)*(acclX*acclX + acclY*acclY + acclZ*acclZ));
+    }
+
     public String locData() {
         return "location (meters): " + locAcc + " " + "location speed (meters/sec): " + locSpeed + "\n";
     }
@@ -93,6 +107,7 @@ public class BoundedService extends Service implements SensorEventListener, Loca
             while(!Thread.currentThread().isInterrupted()) {
                 try {
                     Thread.sleep(THREAD_SLEEP_TIME);
+                    NUM_PREDICTIONS += 1;
                     chunkData();
                     runAlgorithm();
                 } catch (InterruptedException e) {
@@ -121,7 +136,16 @@ public class BoundedService extends Service implements SensorEventListener, Loca
             }
         }
         else {
+            if(serviceCallbacks != null) {
+                double rms = rms();
+                if(rms >= 2) {
+                    serviceCallbacks.predictActivity("Sitting");
+                }
+                else {
+                    serviceCallbacks.predictActivity("Laying");
 
+                }
+            }
         }
 
 /*        synchronized(chunkedAccDataList) {

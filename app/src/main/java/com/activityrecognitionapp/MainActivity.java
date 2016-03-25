@@ -137,7 +137,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     if(isActivitySet_) {
                         isActivitySet_ = false;
                         predictText.setText("Predicted activity: " + activity_ + "\n"
-                                            + "Actual activity: " + currentActivity_);
+                                            + "Actual activity: " + currentActivity_ + "\n"
+                                            + "Accuracy: " + Float.toString(myService.succRate()));
                     }
                     else {
                         predictText.setText("Waiting for prediction...");
@@ -253,6 +254,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void predictActivity(String activity) {
         activity_ = activity;
         isActivitySet_ = true;
+        if(activity.equals(currentActivity_)) {
+            myService.incrSuccess();
+        }
         Log.d("predicted activity: ", "activity");
     }
 }
