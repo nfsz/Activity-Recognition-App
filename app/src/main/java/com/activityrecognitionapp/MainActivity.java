@@ -118,7 +118,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         public void run() {
             while(!Thread.currentThread().isInterrupted()) {
                 try {
-                    Thread.sleep(5000);
+                    Thread.sleep(120000);
 
                     String activity = myService.getLastActivity();
 

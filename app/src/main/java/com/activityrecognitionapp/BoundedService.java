@@ -26,7 +26,7 @@ import java.util.Iterator;
 import java.util.List;
 
 public class BoundedService extends Service implements SensorEventListener {
-    private final long THREAD_SLEEP_TIME = 5000;
+    private final long THREAD_SLEEP_TIME = 120000;
     private final int LOCATION_CHANGES = 1; //threshold to predict walking or running
 
 
