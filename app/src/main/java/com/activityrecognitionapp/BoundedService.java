@@ -23,7 +23,7 @@ import java.util.Calendar;
 import java.util.Collections;
 import java.util.List;
 
-public class BoundedService extends Service implements SensorEventListener, LocationListener {
+public class BoundedService extends Service implements SensorEventListener {
     private final long THREAD_SLEEP_TIME = 5000;
     private final int LOCATION_CHANGES = 1; //threshold to predict walking or running
 
@@ -300,16 +300,6 @@ public class BoundedService extends Service implements SensorEventListener, Loca
         }
     }
 
-    @Override
-    public void onLocationChanged(Location location) {
-        // Called when a new location is found by the network location provider.
-
-        locAcc = 100 * location.getAccuracy();
-        locSpeed = 100 * location.getSpeed();
-        NUM_LOCATION_CHANGES += 1;
-        locDataList.add(new LocDataPoint(locAcc, locSpeed, currentActivity));
-    }
-
 
     public void startSensors() {
 
@@ -333,7 +323,31 @@ public class BoundedService extends Service implements SensorEventListener, Loca
             // for ActivityCompat#requestPermissions for more details.
             return;
         }
-        locationManager_.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 10, 0, this);
+        //locationManager_.requestLocationUpdates(LocationManager.GPS_PROVIDER, 10, 0, this);
+
+        locationManager_.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 3, new LocationListener() {
+            @Override
+            public void onLocationChanged(Location location) {
+                serviceCallbacks.locationChanged();
+                locAcc = 100 * location.getAccuracy();
+                locSpeed = 100 * location.getSpeed();
+                NUM_LOCATION_CHANGES += 1;
+                locDataList.add(new LocDataPoint(locAcc, locSpeed, currentActivity));
+            }
+            @Override
+            public void onProviderDisabled(String provider) {
+                // TODO Auto-generated method stub
+            }
+            @Override
+            public void onProviderEnabled(String provider) {
+                // TODO Auto-generated method stub
+            }
+            @Override
+            public void onStatusChanged(String provider, int status,
+                                        Bundle extras) {
+                // TODO Auto-generated method stub
+            }
+        });
 
     }
 
@@ -343,21 +357,6 @@ public class BoundedService extends Service implements SensorEventListener, Loca
 
     public void setCurrentActivity(int currentActivity) {
         this.currentActivity = currentActivity;
-    }
-
-    @Override
-    public void onStatusChanged(String provider, int status, Bundle extras) {
-
-    }
-
-    @Override
-    public void onProviderEnabled(String provider) {
-
-    }
-
-    @Override
-    public void onProviderDisabled(String provider) {
-
     }
 
     @Override

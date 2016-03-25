@@ -6,4 +6,6 @@ package com.activityrecognitionapp;
 public interface ServiceCallbacks {
     public void predictActivity(String activity);
 
+    public void locationChanged();
+
 }

@@ -27,7 +27,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
 
     private Button start, stop, log, walk, sit, lay;
-    private TextView logText, predictText;
+    private TextView logText, predictText, locationChanged;
     private BoundedService.MyBinder binder_;
     private BoundedService myService;
     private Boolean connected = false;
@@ -36,6 +36,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private String currentActivity_;
     private boolean isActivitySet_;
     private FileOutputStream out;
+    private boolean isChanged;
 
 
     @Override
@@ -73,6 +74,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         logText = (TextView) findViewById(R.id.logText);
         predictText = (TextView) findViewById(R.id.predictText);
+        locationChanged = (TextView) findViewById(R.id.locationText);
         context = this;
 
     }
@@ -133,6 +135,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     Log.d("Acceleration data: ", accMsg);
                     Log.d("Gyroscope data: ", gyroMsg);
                     Log.d("Location data: ", locMsg);
+                    if(isChanged) {
+                        isChanged = false;
+                        locationChanged.setText("Location changed");
+                    }
+                    else{
+                        locationChanged.setText("Has not changed");
+                    }
                     logText.setText(accMsg + " " + gyroMsg + " " + locMsg + " ");
                     if(isActivitySet_) {
                         isActivitySet_ = false;
@@ -234,6 +243,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
 
     }
+
     @Override
     protected void onPause(){
         super.onPause();
@@ -258,5 +268,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             myService.incrSuccess();
         }
         Log.d("predicted activity: ", "activity");
+    }
+
+    @Override
+    public void locationChanged() {
+        isChanged = true;
     }
 }
