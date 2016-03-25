@@ -22,22 +22,18 @@ import android.widget.TextView;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.List;
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener, ServiceCallbacks {
+public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
 
-    private Button start, stop, log, walk, sit, lay;
-    private TextView logText, predictText, locationChanged;
+    private Button getActivities;
+    private TextView activitiesList;
     private BoundedService.MyBinder binder_;
     private BoundedService myService;
     private Boolean connected = false;
     private Context context;
-    private String activity_;
-    private String currentActivity_;
-    private boolean isActivitySet_;
     private FileOutputStream out;
-    private boolean isChanged;
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,37 +42,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-            }
-        });
+        getActivities = (Button) findViewById(R.id.buttonActivities);
+        getActivities.setOnClickListener(this);
 
-        start = (Button) findViewById(R.id.buttonStart);
-        start.setOnClickListener(this);
-        stop = (Button) findViewById(R.id.buttonStop);
-        stop.setOnClickListener(this);
-        log = (Button) findViewById(R.id.buttonLog);
-        log.setOnClickListener(this);
-        walk = (Button) findViewById(R.id.buttonWalk);
-        walk.setOnClickListener(this);
-        sit = (Button) findViewById(R.id.buttonSit);
-        sit.setOnClickListener(this);
-        lay = (Button) findViewById(R.id.buttonLay);
-        lay.setOnClickListener(this);
+        activitiesList = (TextView) findViewById(R.id.textActivities);
 
-        walk.setVisibility(View.GONE);
-        sit.setVisibility(View.GONE);
-        lay.setVisibility(View.GONE);
-
-        logText = (TextView) findViewById(R.id.logText);
-        predictText = (TextView) findViewById(R.id.predictText);
-        locationChanged = (TextView) findViewById(R.id.locationText);
         context = this;
 
+        Intent myIntent = new Intent(this, BoundedService.class);
+        bindService(myIntent, mConnection, BIND_AUTO_CREATE);
     }
 
     @Override
@@ -104,78 +78,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     public void onClick(View v) {
         switch(v.getId()){
-              case R.id.buttonStart:
-                //Log.d("BoundedService", "pressed BoundedS");
-                Intent myIntent = new Intent(this, BoundedService.class);
-                bindService(myIntent, mConnection, BIND_AUTO_CREATE);
-                  walk.setVisibility(View.VISIBLE);
-                  sit.setVisibility(View.VISIBLE);
-                  lay.setVisibility(View.VISIBLE);
-                  isActivitySet_ = false;
-                break;
-            case R.id.buttonStop:
-                walk.setVisibility(View.GONE);
-                sit.setVisibility(View.GONE);
-                lay.setVisibility(View.GONE);
-                isActivitySet_ = false;
 
-                if (connected == true) {
-                    myService.setCurrentActivity(0);
-                    myService.parseData.interrupt();
-                    myService.pauseSensors();
+            case R.id.buttonActivities:
+                String activities = "";
+                List list = myService.getActivities();
+
+                for (int i = 0; i < list.size(); i++){
+                    activities += list.get(i) + "\n";
                 }
+                activitiesList.setText(activities);
                 break;
-
-            case R.id.buttonLog:
-                //Log.d("BoundedService", "pressed Log");
-                if (connected == true) {
-                    String accMsg = myService.acclData();
-                    String gyroMsg = myService.gyroData();
-                    String locMsg = myService.locData();
-                    Log.d("Activity: ", currentActivity_);
-                    Log.d("Acceleration data: ", accMsg);
-                    Log.d("Gyroscope data: ", gyroMsg);
-                    Log.d("Location data: ", locMsg);
-                    Log.d("-- ", "--");
-
-                    if(isChanged) {
-                        isChanged = false;
-                        locationChanged.setText("Location changed");
-                    }
-                    else{
-                        locationChanged.setText("Has not changed");
-                    }
-                    logText.setText(accMsg + " " + gyroMsg + " " + locMsg + " ");
-                    if(isActivitySet_) {
-                        isActivitySet_ = false;
-                        predictText.setText("Predicted activity: " + activity_ + "\n"
-                                            + "Actual activity: " + currentActivity_ + "\n"
-                                            + "Accuracy: " + Float.toString(myService.succRate()));
-                    }
-                    else {
-                        predictText.setText("Waiting for prediction...");
-                    }
-                    String msg = myService.acclData();
-                    writeToFile(msg + "\n");
-
-                }else{
-                    logText.setText("Data collection has not started. Hit start to collect data");
-                    Log.d("BoundedService", "Hit start to collect data");
-                }
-                break;
-            case R.id.buttonWalk:
-                myService.setCurrentActivity(1);
-                currentActivity_ = "Walking";
-                break;
-            case R.id.buttonSit:
-                myService.setCurrentActivity(2);
-                currentActivity_ = "Sitting";
-                break;
-            case R.id.buttonLay:
-                myService.setCurrentActivity(3);
-                currentActivity_ = "Laying";
-                break;
-
         }
     }
 
@@ -201,6 +113,25 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         return (Environment.MEDIA_MOUNTED.equals(state));
     }
 
+
+    public Thread displayActivities = new Thread(new Runnable() {
+        public void run() {
+            while(!Thread.currentThread().isInterrupted()) {
+                try {
+                    Thread.sleep(5000);
+
+                    String activity = myService.getLastActivity();
+
+                    writeToFile(activity + "\n");
+
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    return;
+                }
+            }
+        }
+    });
+
     private ServiceConnection mConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
@@ -208,10 +139,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             myService = binder_.getService();
             connected = true;
             myService.startSensors();
-            myService.setCallbacks(MainActivity.this); // setting this activity as the callback
-            //if (!myService.parseData.isAlive()) {
             myService.parseData.start();
-            //}
+            displayActivities.start();
         }
 
         @Override
@@ -263,18 +192,4 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     }
 
-    @Override
-    public void predictActivity(String activity) {
-        activity_ = activity;
-        isActivitySet_ = true;
-        if(activity.equals(currentActivity_)) {
-            myService.incrSuccess();
-        }
-        //Log.d("predicted activity: ", "activity");
-    }
-
-    @Override
-    public void locationChanged() {
-        isChanged = true;
-    }
 }

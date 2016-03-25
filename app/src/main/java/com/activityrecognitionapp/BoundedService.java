@@ -39,7 +39,6 @@ public class BoundedService extends Service implements SensorEventListener {
     private float CORRECT_PREDICTIONS;
     private Handler myHandler = new Handler();
     private int NUM_LOCATION_CHANGES;
-    private ServiceCallbacks serviceCallbacks;
     private double acclX;
     private double acclY;
     private double acclZ;
@@ -48,16 +47,15 @@ public class BoundedService extends Service implements SensorEventListener {
     private double axisZ; //gyroscope z-cood speed measured in rads/sec
     private float locAcc; //location accuracy measured in centimeters
     private float locSpeed; //location speed meassured in cm/sec
-    private int currentActivity = 0; //0 - no activity, 1 - walk, 2 - sit, 3 - lay
-    List<AcclDataPoint> accDataList = Collections.synchronizedList(new ArrayList<AcclDataPoint>());
-    List<GyroDataPoint> gyroDataList = Collections.synchronizedList(new ArrayList<GyroDataPoint>());
-    List<LocDataPoint> locDataList = Collections.synchronizedList(new ArrayList<LocDataPoint>());
-    List<AcclDataPoint> chunkedAccDataList;
-    List<GyroDataPoint> chunkedGyroDataList;
-    List<LocDataPoint> chunkedLocDataList;
-    ArrayList<String> activities = new ArrayList<String>();
-    Calendar timeBefore;
-    Calendar timeAfter;
+    private List<AcclDataPoint> accDataList = Collections.synchronizedList(new ArrayList<AcclDataPoint>());
+    private List<GyroDataPoint> gyroDataList = Collections.synchronizedList(new ArrayList<GyroDataPoint>());
+    private List<LocDataPoint> locDataList = Collections.synchronizedList(new ArrayList<LocDataPoint>());
+    private List<AcclDataPoint> chunkedAccDataList;
+    private List<GyroDataPoint> chunkedGyroDataList;
+    private List<LocDataPoint> chunkedLocDataList;
+    private ArrayList<String> activities = new ArrayList<String>();
+    private Calendar timeBefore;
+    private Calendar timeAfter;
 
 
     public BoundedService() {
@@ -72,15 +70,13 @@ public class BoundedService extends Service implements SensorEventListener {
         return CORRECT_PREDICTIONS/NUM_PREDICTIONS;
     }
 
-    public void setCallbacks(ServiceCallbacks callbacks) {
-        serviceCallbacks = callbacks;
-    }
-
     @Override
     public IBinder onBind(Intent intent) {
         // TODO: Return the communication channel to the service.
         return mybinder_;
     }
+
+
 
     public class MyBinder extends Binder {
         BoundedService getService() {
@@ -106,6 +102,23 @@ public class BoundedService extends Service implements SensorEventListener {
 
     public String locData() {
         return "location (meters): " + locAcc + " " + "location speed (meters/sec): " + locSpeed + "\n";
+    }
+
+    public List<String> getActivities() {
+        int start = 0;
+        if (activities.size() > 10){
+            start = activities.size() - 10;
+        }
+        return activities.subList(start, activities.size());
+    }
+
+    public String getLastActivity() {
+
+        if (activities != null && !activities.isEmpty()) {
+            return activities.get(activities.size()-1);
+        }else{
+            return "";
+        }
     }
 
     public Thread parseData = new Thread(new Runnable() {
@@ -142,59 +155,37 @@ public class BoundedService extends Service implements SensorEventListener {
         String activity = "";
 
         if(chunkedLocDataList.size() >= THREAD_SLEEP_TIME / (1000 * 2)) {
-            if(serviceCallbacks != null) {
-                serviceCallbacks.predictActivity("Walking " + Integer.toString(chunkedLocDataList.size()));
-                activity = "Walking";
-            }
+            activity = "Walking";
         }
         else {
-            if(serviceCallbacks != null) {
-                double ZSum = 0;
-                int listSize = chunkedAccDataList.size();
+            double ZSum = 0;
+            int listSize = chunkedAccDataList.size();
 
-                synchronized(chunkedAccDataList) {
-                    Iterator i = chunkedAccDataList.iterator();
-                    while (i.hasNext()) {
-                        //i.next().getClass();
-                        double z = ((AcclDataPoint)i.next()).getAcclZ();
-                        ZSum += z;
-                    }
+            synchronized(chunkedAccDataList) {
+                Iterator i = chunkedAccDataList.iterator();
+                while (i.hasNext()) {
+                    double z = ((AcclDataPoint)i.next()).getAcclZ();
+                    ZSum += z;
                 }
-
-                double ZAvg = ZSum / listSize;
-
-                if (ZAvg >= 0){
-                    serviceCallbacks.predictActivity("Sitting " + Integer.toString(NUM_LOCATION_CHANGES));
-                    activity = "Sitting";
-                }else if (ZAvg < 0){
-                    serviceCallbacks.predictActivity("Laying " + Integer.toString(NUM_LOCATION_CHANGES));
-                    activity = "Laying";
-                }
-
             }
+
+            double ZAvg = ZSum / listSize;
+
+            if (ZAvg >= 0){
+                activity = "Sitting";
+            }else if (ZAvg < 0){
+                activity = "Laying";
+            }
+
         }
 
         Calendar time = Calendar.getInstance();
-        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss a");
+        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm a");
         String before = sdf.format(timeBefore.getTime());
         String after = sdf.format(timeAfter.getTime());
         String activityString = before + " - " + after + "\t" + activity;
         activities.add(activityString);
         Log.d("Activity: ", activityString);
-
-/*        synchronized(chunkedGyroDataList) {
-            Iterator i = chunkedGyroDataList.iterator();
-            while (i.hasNext()) {
-                //foo(i.next());
-            }
-        }
-
-        synchronized(chunkedLocDataList) {
-            Iterator i = chunkedLocDataList.iterator();
-            while (i.hasNext()) {
-                //foo(i.next());
-            }
-        }*/
 
     }
 
@@ -213,7 +204,7 @@ public class BoundedService extends Service implements SensorEventListener {
             acclY = event_.values[1];
             acclZ = event_.values[2];
 
-            accDataList.add(new AcclDataPoint(acclX, acclY, acclZ, currentActivity));
+            accDataList.add(new AcclDataPoint(acclX, acclY, acclZ));
 
 /*            acclxe.setText(new Double(acclX).toString());
             acclye.setText(new Double(acclY).toString());
@@ -237,7 +228,7 @@ public class BoundedService extends Service implements SensorEventListener {
             axisY = event_.values[1];
             axisZ = event_.values[2];
 
-            gyroDataList.add(new GyroDataPoint(axisX, axisY, axisZ, currentActivity));
+            gyroDataList.add(new GyroDataPoint(axisX, axisY, axisZ));
         }
     }
 
@@ -357,20 +348,22 @@ public class BoundedService extends Service implements SensorEventListener {
         locationManager_.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 1, new LocationListener() {
             @Override
             public void onLocationChanged(Location location) {
-                serviceCallbacks.locationChanged();
                 locAcc = 100 * location.getAccuracy();
                 locSpeed = 100 * location.getSpeed();
                 NUM_LOCATION_CHANGES += 1;
-                locDataList.add(new LocDataPoint(locAcc, locSpeed, currentActivity));
+                locDataList.add(new LocDataPoint(locAcc, locSpeed));
             }
+
             @Override
             public void onProviderDisabled(String provider) {
                 // TODO Auto-generated method stub
             }
+
             @Override
             public void onProviderEnabled(String provider) {
                 // TODO Auto-generated method stub
             }
+
             @Override
             public void onStatusChanged(String provider, int status,
                                         Bundle extras) {
@@ -382,10 +375,6 @@ public class BoundedService extends Service implements SensorEventListener {
 
     public void pauseSensors(){
         sensormanager_.unregisterListener(this);
-    }
-
-    public void setCurrentActivity(int currentActivity) {
-        this.currentActivity = currentActivity;
     }
 
     @Override
