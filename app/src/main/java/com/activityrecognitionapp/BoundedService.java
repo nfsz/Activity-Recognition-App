@@ -36,6 +36,7 @@ public class BoundedService extends Service implements SensorEventListener, Loca
     private float NUM_PREDICTIONS;
     private float CORRECT_PREDICTIONS;
     private Handler myHandler = new Handler();
+    private int NUM_LOCATION_CHANGES;
     private ServiceCallbacks serviceCallbacks;
     private double acclX;
     private double acclY;
@@ -108,6 +109,7 @@ public class BoundedService extends Service implements SensorEventListener, Loca
                 try {
                     Thread.sleep(THREAD_SLEEP_TIME);
                     NUM_PREDICTIONS += 1;
+                    NUM_LOCATION_CHANGES = 0;
                     chunkData();
                     runAlgorithm();
                 } catch (InterruptedException e) {
@@ -130,7 +132,7 @@ public class BoundedService extends Service implements SensorEventListener, Loca
     private void runAlgorithm() {
         Log.d("Log", "Running Algorithm");
 
-        if(locDataList.size() >= LOCATION_CHANGES) {
+        if(NUM_LOCATION_CHANGES >= LOCATION_CHANGES) {
             if(serviceCallbacks != null) {
                 serviceCallbacks.predictActivity("Walking or Running");
             }
@@ -304,6 +306,7 @@ public class BoundedService extends Service implements SensorEventListener, Loca
 
         locAcc = 100 * location.getAccuracy();
         locSpeed = 100 * location.getSpeed();
+        NUM_LOCATION_CHANGES += 1;
         locDataList.add(new LocDataPoint(locAcc, locSpeed, currentActivity));
     }
 
