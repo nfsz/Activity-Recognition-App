@@ -134,17 +134,17 @@ public class BoundedService extends Service implements SensorEventListener, Loca
 
         if(NUM_LOCATION_CHANGES >= LOCATION_CHANGES) {
             if(serviceCallbacks != null) {
-                serviceCallbacks.predictActivity("Walking or Running");
+                serviceCallbacks.predictActivity("Walking " + Integer.toString(NUM_LOCATION_CHANGES));
             }
         }
         else {
             if(serviceCallbacks != null) {
                 double rms = rms();
                 if(rms >= 2) {
-                    serviceCallbacks.predictActivity("Sitting");
+                    serviceCallbacks.predictActivity("Sitting " + Integer.toString(NUM_LOCATION_CHANGES));
                 }
                 else {
-                    serviceCallbacks.predictActivity("Laying");
+                    serviceCallbacks.predictActivity("Laying " + Integer.toString(NUM_LOCATION_CHANGES));
 
                 }
             }
